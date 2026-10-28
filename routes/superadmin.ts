@@ -1,0 +1,82 @@
+import express from 'express';
+import { User } from '../models/User';
+import { Mission } from '../models/Mission';
+import { Gallery } from '../models/Gallery';
+import cloudinary from '../utils/cloudinary'; // ✅ Cloudinary ইমপোর্ট
+
+const router = express.Router();
+
+// ================== USER APPROVAL ==================
+router.put('/approve/:id', async (req, res) => {
+  try {
+    const memberId = 'BP-' + Math.floor(1000 + Math.random() * 9000);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { approved: true, memberId },
+      { new: true }
+    );
+    res.json({ success: true, memberId: user?.memberId });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.delete('/users/:id', async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// ================== MISSIONS ==================
+router.get('/missions/active', async (req, res) => {
+  try {
+    const missions = await Mission.find({ active: true }).sort({ createdAt: -1 });
+    res.json({ success: true, missions });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.post('/missions/create', async (req, res) => {
+  try {
+    const { title, description, progress, albumPhotos } = req.body;
+    const mission = await Mission.create({ title, description, progress, albumPhotos });
+    res.json({ success: true, mission });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// ================== GALLERY ==================
+router.get('/albums/photos', async (req, res) => {
+  try {
+    const photos = await Gallery.find().sort({ createdAt: -1 });
+    res.json({ success: true, photos });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+router.post('/gallery/add', async (req, res) => {
+  try {
+    const { imageUrl, title } = req.body;
+    const photo = await Gallery.create({ url: imageUrl, caption: title });
+    res.json({ success: true, photo });
+  } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// ✅ আসল Cloudinary দিয়ে ছবি আপলোড
+router.post('/upload', async (req, res) => {
+  try {
+    const { data } = req.body;
+    if (!data || !data.startsWith('data:image')) {
+      return res.status(400).json({ success: false, message: 'Invalid image data' });
+    }
+
+    // Cloudinary-তে আপলোড করা
+    const uploadResponse = await cloudinary.uploader.upload(data, {
+      folder: 'ekotaboddho/gallery',
+      transformation: [{ width: 1000, crop: 'limit' }]
+    });
+
+    res.json({ success: true, url: uploadResponse.secure_url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Image upload failed' });
+  }
+});
+
+export default router;
