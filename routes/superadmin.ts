@@ -2,12 +2,13 @@ import express from 'express';
 import { User } from '../models/User';
 import { Mission } from '../models/Mission';
 import { Gallery } from '../models/Gallery';
-import cloudinary from '../utils/cloudinary'; // ✅ Cloudinary ইমপোর্ট
+import cloudinary from '../utils/cloudinary';
+import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
 
 const router = express.Router();
 
 // ================== USER APPROVAL ==================
-router.put('/approve/:id', async (req, res) => {
+router.put('/approve/:id', requireAdmin, async (req, res) => {
   try {
     const memberId = 'BP-' + Math.floor(1000 + Math.random() * 9000);
     const user = await User.findByIdAndUpdate(
@@ -19,13 +20,6 @@ router.put('/approve/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.delete('/users/:id', async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) { res.status(500).json({ success: false }); }
-});
-
 // ================== MISSIONS ==================
 router.get('/missions/active', async (req, res) => {
   try {
@@ -34,7 +28,7 @@ router.get('/missions/active', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.post('/missions/create', async (req, res) => {
+router.post('/missions/create', requireAdmin, async (req, res) => {
   try {
     const { title, description, progress, albumPhotos } = req.body;
     const mission = await Mission.create({ title, description, progress, albumPhotos });
@@ -50,7 +44,7 @@ router.get('/albums/photos', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.post('/gallery/add', async (req, res) => {
+router.post('/gallery/add', requireAdmin, async (req, res) => {
   try {
     const { imageUrl, title } = req.body;
     const photo = await Gallery.create({ url: imageUrl, caption: title });
@@ -58,15 +52,14 @@ router.post('/gallery/add', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-// ✅ আসল Cloudinary দিয়ে ছবি আপলোড
-router.post('/upload', async (req, res) => {
+// ================== UPLOAD ==================
+router.post('/upload', requireAdmin, async (req, res) => {
   try {
     const { data } = req.body;
     if (!data || !data.startsWith('data:image')) {
       return res.status(400).json({ success: false, message: 'Invalid image data' });
     }
 
-    // Cloudinary-তে আপলোড করা
     const uploadResponse = await cloudinary.uploader.upload(data, {
       folder: 'ekotaboddho/gallery',
       transformation: [{ width: 1000, crop: 'limit' }]
