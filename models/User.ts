@@ -13,7 +13,8 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   approved: { type: Boolean, default: false },
   rulesAccepted: { type: Boolean, default: false },
-  rejected: { type: Boolean, default: false }, // ✅ নতুন ফিল্ড যোগ করা হলো
+  rejected: { type: Boolean, default: false },
+  frozen: { type: Boolean, default: false }, // ✅ নতুন: ফ্রিজ স্ট্যাটাস
   isVerified: { type: Boolean, default: false },
   otp: { type: String },
   otpExpires: { type: Date },
