@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Poll } from '../models/Poll';
-import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
+import { requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -57,6 +57,16 @@ router.post('/create', requireAdmin, async (req, res) => {
     res.json({ success: true, message: 'পোল তৈরি হয়েছে' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'সার্ভার এরর' });
+  }
+});
+
+// ✅ নতুন: Poll ডিলিট
+router.delete('/:id', requireAdmin, async (req, res) => {
+  try {
+    await Poll.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'পোল ডিলিট হয়েছে' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
