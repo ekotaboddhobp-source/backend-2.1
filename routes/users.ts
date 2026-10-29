@@ -3,11 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'; 
 import { User } from '../models/User';
 import cloudinary from '../utils/cloudinary';
-import { requireAuth, requireAdmin } from '../middleware/auth'; // ✅ দুটোই ইমপোর্ট
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
-// ✅ মেম্বার লিস্ট: যেকোনো লগইন করা ইউজার দেখতে পারবে (Admin না হলেও)
 router.get('/approved', requireAuth, async (req, res) => {
   try {
     const users = await User.find({ approved: true }).select('-password');
@@ -17,7 +16,6 @@ router.get('/approved', requireAuth, async (req, res) => {
   }
 });
 
-// ✅ পেন্ডিং লিস্ট: শুধু Admin দেখতে পারবে
 router.get('/pending', requireAdmin, async (req, res) => {
   try {
     const users = await User.find({ approved: false, isVerified: true, rejected: false }).select('-password');
@@ -105,9 +103,13 @@ router.post('/profile-picture', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image format' });
     }
 
+    // ✅ Feature 23: Cloudinary Optimization (Auto Format & Quality)
     const uploadResponse = await cloudinary.uploader.upload(image, {
       folder: 'ekotaboddho/profiles',
-      transformation: [{ width: 500, height: 500, crop: 'limit' }]
+      transformation: [
+        { width: 500, height: 500, crop: 'limit' },
+        { fetch_format: 'auto', quality: 'auto' }
+      ]
     });
 
     const finalImageUrl = uploadResponse.secure_url;
