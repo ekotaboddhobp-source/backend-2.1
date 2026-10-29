@@ -1,8 +1,9 @@
 import express from 'express';
+import nodemailer from 'nodemailer'; // ✅ নতুন ইমপোর্ট
 import { Fund } from '../models/Fund';
 import { Notice } from '../models/Notice';
 import { Event } from '../models/Event';
-import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
+import { requireAdmin } from '../middleware/auth'; 
 
 const router = express.Router();
 
@@ -65,6 +66,58 @@ router.post('/events/add', requireAdmin, async (req, res) => {
     const event = await Event.create({ title, date });
     res.json({ success: true, event });
   } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// ================== NEWSLETTER ==================
+router.post('/newsletter/send', requireAdmin, async (req, res) => {
+  try {
+    const { subject, message } = req.body;
+    if (!subject || !message) {
+      return res.status(400).json({ success: false, message: 'বিষয় এবং বিবরণ দিন' });
+    }
+
+    // সব অ্যাপ্রুভড ইউজারের ইমেইল বের করা
+    const { User } = require('../models/User'); // অথবা উপরে ইমপোর্ট করে নাও
+    const users = await User.find({ approved: true, email: { $exists: true, $ne: '' } }).select('email');
+    const emails = users.map((u: any) => u.email);
+
+    if (emails.length === 0) {
+      return res.status(404).json({ success: false, message: 'কোনো সাবস্ক্রাইবার পাওয়া যায়নি' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Ekotaboddho B.P" <${process.env.EMAIL_USER}>`,
+      bcc: emails.join(','), // BCC ব্যবহার করা হলো যাতে সবার ইমেইল গোপন থাকে
+      subject: subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://res.cloudinary.com/dt0zlw656/image/upload/v1740134764/ekotaboddho_logo.png" alt="Logo" style="width: 80px; border-radius: 50%;">
+          </div>
+          <h2 style="color: #6C63FF; text-align: center;">${subject}</h2>
+          <p style="color: #333; line-height: 1.6; font-size: 16px;">${message.replace(/\n/g, '<br>')}</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #888; font-size: 12px; text-align: center;">এটি একটি অটোমেটেড মেসেজ। Ekotaboddho B.P এর পক্ষ থেকে পাঠানো হয়েছে।</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: `${emails.length} জন সদস্যকে ইমেইল পাঠানো হয়েছে` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'ইমেইল পাঠাতে সমস্যা হয়েছে' });
+  }
 });
 
 export default router;
