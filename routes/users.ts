@@ -54,6 +54,20 @@ router.put('/reject/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ✅ নতুন: ইউজার ফ্রিজ/আনফ্রিজ
+router.put('/freeze/:id', requireAdmin, async (req, res) => {
+  try {
+    const { frozen } = req.body;
+    await User.findByIdAndUpdate(req.params.id, { frozen: !!frozen });
+    res.json({ 
+      success: true, 
+      message: frozen ? 'ইউজার ফ্রিজ করা হয়েছে' : 'ইউজার আনফ্রিজ করা হয়েছে' 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 router.put('/update/:id', async (req, res) => {
   try {
     const { name, phone, address, bloodGroup, fatherName } = req.body;
@@ -103,7 +117,6 @@ router.post('/profile-picture', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image format' });
     }
 
-    // ✅ Feature 23: Cloudinary Optimization (Auto Format & Quality)
     const uploadResponse = await cloudinary.uploader.upload(image, {
       folder: 'ekotaboddho/profiles',
       transformation: [
