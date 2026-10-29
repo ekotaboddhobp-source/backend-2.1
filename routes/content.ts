@@ -1,5 +1,5 @@
 import express from 'express';
-import nodemailer from 'nodemailer'; // ✅ নতুন ইমপোর্ট
+import nodemailer from 'nodemailer';
 import { Fund } from '../models/Fund';
 import { Notice } from '../models/Notice';
 import { Event } from '../models/Event';
@@ -52,6 +52,14 @@ router.post('/notices/add', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
+// ✅ নতুন: Notice ডিলিট
+router.delete('/notices/:id', requireAdmin, async (req, res) => {
+  try {
+    await Notice.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'নোটিশ ডিলিট হয়েছে' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
+});
+
 // ================== EVENTS ==================
 router.get('/events/upcoming', async (req, res) => {
   try {
@@ -68,6 +76,14 @@ router.post('/events/add', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
+// ✅ নতুন: Event ডিলিট
+router.delete('/events/:id', requireAdmin, async (req, res) => {
+  try {
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'ইভেন্ট ডিলিট হয়েছে' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
+});
+
 // ================== NEWSLETTER ==================
 router.post('/newsletter/send', requireAdmin, async (req, res) => {
   try {
@@ -76,8 +92,7 @@ router.post('/newsletter/send', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'বিষয় এবং বিবরণ দিন' });
     }
 
-    // সব অ্যাপ্রুভড ইউজারের ইমেইল বের করা
-    const { User } = require('../models/User'); // অথবা উপরে ইমপোর্ট করে নাও
+    const { User } = require('../models/User');
     const users = await User.find({ approved: true, email: { $exists: true, $ne: '' } }).select('email');
     const emails = users.map((u: any) => u.email);
 
@@ -97,7 +112,7 @@ router.post('/newsletter/send', requireAdmin, async (req, res) => {
 
     const mailOptions = {
       from: `"Ekotaboddho B.P" <${process.env.EMAIL_USER}>`,
-      bcc: emails.join(','), // BCC ব্যবহার করা হলো যাতে সবার ইমেইল গোপন থাকে
+      bcc: emails.join(','),
       subject: subject,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
