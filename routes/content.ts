@@ -2,6 +2,7 @@ import express from 'express';
 import { Fund } from '../models/Fund';
 import { Notice } from '../models/Notice';
 import { Event } from '../models/Event';
+import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/fund', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.post('/fund/update', async (req, res) => {
+router.post('/fund/update', requireAdmin, async (req, res) => {
   try {
     const { amount } = req.body;
     let fund = await Fund.findOne();
@@ -42,7 +43,7 @@ router.get('/notices', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.post('/notices/add', async (req, res) => {
+router.post('/notices/add', requireAdmin, async (req, res) => {
   try {
     const { title, description } = req.body;
     const notice = await Notice.create({ title, description });
@@ -58,7 +59,7 @@ router.get('/events/upcoming', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
-router.post('/events/add', async (req, res) => {
+router.post('/events/add', requireAdmin, async (req, res) => {
   try {
     const { title, date } = req.body;
     const event = await Event.create({ title, date });
