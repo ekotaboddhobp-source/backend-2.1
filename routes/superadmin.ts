@@ -3,7 +3,7 @@ import { User } from '../models/User';
 import { Mission } from '../models/Mission';
 import { Gallery } from '../models/Gallery';
 import cloudinary from '../utils/cloudinary';
-import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
+import { requireAdmin } from '../middleware/auth'; 
 
 const router = express.Router();
 
@@ -60,9 +60,13 @@ router.post('/upload', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image data' });
     }
 
+    // ✅ Feature 23: Cloudinary Optimization (Auto Format & Quality)
     const uploadResponse = await cloudinary.uploader.upload(data, {
       folder: 'ekotaboddho/gallery',
-      transformation: [{ width: 1000, crop: 'limit' }]
+      transformation: [
+        { width: 1000, crop: 'limit' },
+        { fetch_format: 'auto', quality: 'auto' }
+      ]
     });
 
     res.json({ success: true, url: uploadResponse.secure_url });
