@@ -2,11 +2,12 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'; 
 import { User } from '../models/User';
-import cloudinary from '../utils/cloudinary'; // ✅ Cloudinary ইমপোর্ট
+import cloudinary from '../utils/cloudinary';
+import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
 
 const router = express.Router();
 
-router.get('/approved', async (req, res) => {
+router.get('/approved', requireAdmin, async (req, res) => {
   try {
     const users = await User.find({ approved: true }).select('-password');
     res.json({ success: true, users });
@@ -15,7 +16,7 @@ router.get('/approved', async (req, res) => {
   }
 });
 
-router.get('/pending', async (req, res) => {
+router.get('/pending', requireAdmin, async (req, res) => {
   try {
     const users = await User.find({ approved: false, isVerified: true, rejected: false }).select('-password');
     res.json({ success: true, users });
@@ -44,7 +45,7 @@ router.put('/accept-rules', async (req, res) => {
   }
 });
 
-router.put('/reject/:id', async (req, res) => {
+router.put('/reject/:id', requireAdmin, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.id, { rejected: true, approved: false });
     res.json({ success: true, message: 'User rejected successfully' });
@@ -88,7 +89,6 @@ router.put('/change-password', async (req, res) => {
   }
 });
 
-// ✅ আসল Cloudinary দিয়ে প্রোফাইল ছবি আপলোড
 router.post('/profile-picture', async (req, res) => {
   try {
     const { image } = req.body; 
@@ -103,15 +103,14 @@ router.post('/profile-picture', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image format' });
     }
 
-    // Cloudinary-তে আপলোড করা
     const uploadResponse = await cloudinary.uploader.upload(image, {
-      folder: 'ekotaboddho/profiles', // Cloudinary-তে ফোল্ডারের নাম
-      transformation: [{ width: 500, height: 500, crop: 'limit' }] // ছবি রিসাইজ
+      folder: 'ekotaboddho/profiles',
+      transformation: [{ width: 500, height: 500, crop: 'limit' }]
     });
 
     const finalImageUrl = uploadResponse.secure_url;
 
-    const user = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       decoded.userId,
       { photoUrl: finalImageUrl },
       { new: true }
@@ -124,7 +123,7 @@ router.post('/profile-picture', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ success: true });
