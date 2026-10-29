@@ -7,7 +7,6 @@ import { requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
-// ================== USER APPROVAL ==================
 router.put('/approve/:id', requireAdmin, async (req, res) => {
   try {
     const memberId = 'BP-' + Math.floor(1000 + Math.random() * 9000);
@@ -36,6 +35,14 @@ router.post('/missions/create', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
+// ✅ নতুন: Mission ডিলিট
+router.delete('/missions/:id', requireAdmin, async (req, res) => {
+  try {
+    await Mission.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'মিশন ডিলিট হয়েছে' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
+});
+
 // ================== GALLERY ==================
 router.get('/albums/photos', async (req, res) => {
   try {
@@ -52,6 +59,14 @@ router.post('/gallery/add', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false }); }
 });
 
+// ✅ নতুন: Gallery photo ডিলিট
+router.delete('/gallery/:id', requireAdmin, async (req, res) => {
+  try {
+    await Gallery.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'ছবি ডিলিট হয়েছে' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
+});
+
 // ================== UPLOAD ==================
 router.post('/upload', requireAdmin, async (req, res) => {
   try {
@@ -60,7 +75,6 @@ router.post('/upload', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image data' });
     }
 
-    // ✅ Feature 23: Cloudinary Optimization (Auto Format & Quality)
     const uploadResponse = await cloudinary.uploader.upload(data, {
       folder: 'ekotaboddho/gallery',
       transformation: [
