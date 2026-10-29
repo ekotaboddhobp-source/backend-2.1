@@ -3,11 +3,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'; 
 import { User } from '../models/User';
 import cloudinary from '../utils/cloudinary';
-import { requireAdmin } from '../middleware/auth'; // ✅ নতুন ইমপোর্ট
+import { requireAuth, requireAdmin } from '../middleware/auth'; // ✅ দুটোই ইমপোর্ট
 
 const router = express.Router();
 
-router.get('/approved', requireAdmin, async (req, res) => {
+// ✅ মেম্বার লিস্ট: যেকোনো লগইন করা ইউজার দেখতে পারবে (Admin না হলেও)
+router.get('/approved', requireAuth, async (req, res) => {
   try {
     const users = await User.find({ approved: true }).select('-password');
     res.json({ success: true, users });
@@ -16,6 +17,7 @@ router.get('/approved', requireAdmin, async (req, res) => {
   }
 });
 
+// ✅ পেন্ডিং লিস্ট: শুধু Admin দেখতে পারবে
 router.get('/pending', requireAdmin, async (req, res) => {
   try {
     const users = await User.find({ approved: false, isVerified: true, rejected: false }).select('-password');
