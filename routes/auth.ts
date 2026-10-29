@@ -84,9 +84,20 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'ইউজার পাওয়া যায়নি' });
     if (!user.isVerified) return res.status(400).json({ success: false, message: 'আপনার ইমেইল ভেরিফাই করা হয়নি।' });
     if (user.rejected) return res.status(400).json({ success: false, message: 'আপনার অ্যাকাউন্ট রিজেক্ট করা হয়েছে।' });
+    
+    // ✅ নতুন: ফ্রিজ চেক
+    if (user.frozen) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'আপনার অ্যাকাউন্ট ফ্রিজ করা হয়েছে। অনুগ্রহ করে অ্যাডমিনের সাথে যোগাযোগ করুন।',
+        frozen: true 
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ success: false, message: 'পাসওয়ার্ড ভুল' });
+
+    // ... বাকি লগইন কোড অপরিবর্তিত ...
 
     // (যদি 2FA চালু থাকে, তবে এখানে requires2FA পাঠানো যাবে)
     const requires2FA = false; 
