@@ -2,10 +2,9 @@ import nodemailer from 'nodemailer';
 
 export const sendOtpEmail = async (email: string, otp: string) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com', // ✅ নিশ্চিত করুন
-    port: 465,              // ✅ পোর্ট 465 ব্যবহার করুন
-    secure: true,           // ✅ SSL এর জন্য true
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
