@@ -20,7 +20,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://yourdomain.com', // ← আপনার প্রোডাকশন ডোমেইন
+  'https://ekotaboddho-bp.vercel.app', // ← আপনার প্রোডাকশন ডোমেইন
   process.env.FRONTEND_URL || '',
 ].filter(Boolean);
 
