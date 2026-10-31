@@ -37,6 +37,20 @@ router.get('/group-link', async (req, res) => {
   res.json({ success: true, groupLink: 'https://m.me/j/AbY123456789' });
 });
 
+// ==================== ✅ NEW: Get current user (fresh data) ====================
+router.get('/me', requireAuth, async (req: any, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: 'User not found' });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // ==================== PUT: Accept rules ====================
 router.put('/accept-rules', requireAuth, async (req: any, res) => {
   try {
@@ -171,20 +185,6 @@ router.post('/profile-picture', requireAuth, async (req: any, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Image upload failed' });
-  }
-});
-
-// ==================== ✅ NEW: Get current user (fresh data) ====================
-router.get('/me', requireAuth, async (req: any, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: 'User not found' });
-    res.json({ success: true, user });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
